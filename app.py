@@ -13,8 +13,9 @@ st.set_page_config(
 st.markdown("""
 <style>
 .big-font {font-size:20px !important; font-weight:bold;}
-.safe-box {background-color:#d4edda; padding:20px; border-radius:10px; border-left: 5px solid #28a745;}
-.phish-box {background-color:#f8d7da; padding:20px; border-radius:10px; border-left: 5px solid #dc3545;}
+.safe-box {background-color:#d4edda; padding:20px; border-radius:10px; border-left: 5px solid #28a745; color: #155724 !important;}
+.phish-box {background-color:#f8d7da; padding:20px; border-radius:10px; border-left: 5px solid #dc3545; color: #721c24 !important;}
+.safe-box h3, .phish-box h3 {color: #000000 !important; font-weight: bold;}
 </style>
 """, unsafe_allow_html=True)
 
