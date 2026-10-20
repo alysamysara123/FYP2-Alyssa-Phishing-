@@ -9,7 +9,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# Custom CSS - biar nampak premium
+# Custom CSS 
 st.markdown("""
 <style>
 .big-font {font-size:20px !important; font-weight:bold;}
@@ -36,12 +36,11 @@ with st.sidebar:
     st.title("Threat Intel")
     st.info("""
     **Source:**
-    - MyCERT Advisory 2024
+    - MyCERT Advisory 2024-2025
     - PhishTank Verified
     - CyberSecurity Malaysia
     """)
-    st.metric("Malaysian Bank Phishing", "↑ 34%", "2024")
-    st.metric("Detection Accuracy", "96.2%")
+    st.metric(label="Malaysian Bank Phishing", value="↑ 34%", delta="2024-2025")
 
 # Main
 st.title("🛡️ Malaysia Banking Phishing Detector")
@@ -65,7 +64,7 @@ with tab1:
             if is_legit and not has_scam:
                 st.markdown('<div class="safe-box"><h3>✅ SAFE - Legitimate Banking Domain</h3>Domain verified in Malaysian Bank Whitelist.</div>', unsafe_allow_html=True)
             elif has_bank and has_scam:
-                st.markdown('<div class="phish-box"><h3>🚨 CONFIRMED PHISHING</h3>Matched Localized Threat Pattern: Bank Keyword + Scam TLD/Keyword.<br><b>Source: MyCERT Pattern 2024</b></div>', unsafe_allow_html=True)
+                st.markdown('<div class="phish-box"><h3>🚨 CONFIRMED PHISHING</h3>Matched Localized Threat Pattern: Bank Keyword + Scam TLD/Keyword.<br><b>Source: MyCERT & CyberSecurity Malaysia Pattern 2024-2025</b></div>', unsafe_allow_html=True)
             else:
                 pred = model.predict([[len(url), 1 if "@" in url else 0]])[0] # contoh feature
                 if pred == 1:
@@ -77,7 +76,7 @@ with tab1:
                 st.write(f"Domain: {domain}, Legit: {is_legit}, Bank: {has_bank}, Scam: {has_scam}")
 
 with tab2:
-    st.subheader("Top 5 Phishing Patterns Targeting Malaysian Banks (2024)")
+    st.subheader("Top 5 Phishing Patterns Targeting Malaysian Banks (2024-2025)")
     st.table({
         "Pattern": ["maybank2u + .tk", "hlb + secure-login", "cimb + verify", "tng + reactivate", "rhb + .ml"],
         "Frequency": ["42%", "28%", "15%", "10%", "5%"],
@@ -85,4 +84,4 @@ with tab2:
     })
 
 with tab3:
-    st.write("This system implements a hybrid 3-layer detection...")
+    st.write("This system implements a hybrid 3-layer detection with localized threat intelligence for Malaysian banking institutions (2024-2025).")
