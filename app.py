@@ -39,10 +39,14 @@ def extract_features(url):
         1 if any(c.isdigit() for c in url) else 0,
     ]
 
-# Threat Intel Data
-legit_domains = ["hlb.com.my", "maybank2u.com.my", "cimb.com.my", "rhb.com.my", "publicbank.com.my", "hlbb.com.my"]
-bank_keywords = ["maybank", "maybank2u", "hlb", "hongleong", "cimb", "tng", "rhb", "publicbank", "bankislam", "ambank"]
-scam_keywords = [".tk", ".ml", ".gq", ".cf", "@", "secure-login", "verify-account", "reactivate", "login-verify"]
+# Threat Intel Data - UPDATED FOR BSN/MYBSN CASE
+legit_domains = ["hlb.com.my", "maybank2u.com.my", "cimb.com.my", "rhb.com.my", "publicbank.com.my", "hlbb.com.my", "mybsn.com.my", "bsn.com.my", "www.mybsn.com.my"]
+
+# FIX 1: Added bsn, mybsn, bsnbank
+bank_keywords = ["maybank", "maybank2u", "hlb", "hongleong", "cimb", "tng", "rhb", "publicbank", "bankislam", "ambank", "bsn", "mybsn", "bsnbank", "mybsnbank"]
+
+# FIX 2: Added more generic scam patterns to catch login-secure.tk
+scam_keywords = [".tk", ".ml", ".gq", ".cf", ".buzz", ".top", ".xyz", "@", "secure-login", "verify-account", "reactivate", "login-verify", "login-secure", "secure", "-login", "login-", "-verify"]
 
 # Sidebar
 with st.sidebar:
@@ -75,7 +79,7 @@ with tab1:
                 ext = tldextract.extract(url_low)
                 domain = f"{ext.domain}.{ext.suffix}" if ext.suffix else ext.domain
                 
-                # NEW: Detect IP address - FIX FOR YOUR CASE
+                # Detect IP address
                 ip_pattern = r"\b(?:\d{1,3}\.){3}\d{1,3}\b"
                 has_ip = bool(re.search(ip_pattern, url_low))
                 
@@ -83,10 +87,14 @@ with tab1:
                 has_bank = any(b in url_low for b in bank_keywords)
                 has_scam = any(s in url_low for s in scam_keywords)
                 
-                # LAYER 1: Whitelist
+                # LAYER 1: Whitelist - FIXED to avoid false positive on phishing
                 if is_legit and not has_scam and not has_ip:
-                    st.markdown('<div class="safe-box"><h3>✅ SAFE - Legitimate Banking Domain</h3>Domain verified in Malaysian Bank Whitelist.</div>', unsafe_allow_html=True)
-                # LAYER 2: Threat Intel - NOW CATCHES 192.168.1.1/maybank
+                    # Extra check: if url has extra words like secure-login after legit domain, it's still phishing
+                    if any(x in url_low for x in ["-secure", "login-secure", "secure-"]):
+                        st.markdown('<div class="phish-box"><h3>🚨 CONFIRMED PHISHING</h3>Impersonating Legit Domain with Scam Path.<br><b>Pattern: Legit Domain + Scam Keyword</b></div>', unsafe_allow_html=True)
+                    else:
+                        st.markdown('<div class="safe-box"><h3>✅ SAFE - Legitimate Banking Domain</h3>Domain verified in Malaysian Bank Whitelist.</div>', unsafe_allow_html=True)
+                # LAYER 2: Threat Intel - CATCHES mybsn-login-secure.tk NOW
                 elif has_ip and has_bank:
                     st.markdown('<div class="phish-box"><h3>🚨 CONFIRMED PHISHING</h3>IP Address used with Bank Keyword - Banks never use IP.<br><b>Pattern: IP + Banking Keyword (High Risk)</b></div>', unsafe_allow_html=True)
                 elif has_bank and has_scam:
