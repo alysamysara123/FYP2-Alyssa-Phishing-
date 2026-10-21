@@ -1,16 +1,25 @@
 import pandas as pd
-from sklearn.ensemble import RandomForestClassifier
 import pickle
+from sklearn.ensemble import RandomForestClassifier
 
-df = pd.read_csv('phishing_site_urls.csv')
-df['url_length'] = df['URL'].apply(len)
-df['has_at'] = df['URL'].apply(lambda x: 1 if '@' in x else 0)
-df['has_maybank'] = df['URL'].apply(lambda x: 1 if 'maybank' in x.lower() or 'tng' in x.lower() else 0)
+def extract_features(url):
+    return [
+        len(url),
+        1 if "@" in url else 0,
+        url.count("."),
+        url.count("-"),
+        1 if "https" in url else 0,
+        len(url.split("/")),
+        1 if url.count("//") > 1 else 0,
+        1 if any(c.isdigit() for c in url) else 0,
+    ]
 
-X = df[['url_length','has_at','has_maybank']]
-y = df['Label']
+df = pd.read_csv("dataset.csv")
+X = df['url'].apply(lambda x: extract_features(str(x))).tolist()
+y = df['label'].tolist()
 
-model = RandomForestClassifier()
-model.fit(X,y)
-pickle.dump(model, open('model.pkl','wb'))
-print("Model FYP2 siap!")
+model = RandomForestClassifier(n_estimators=100, random_state=42)
+model.fit(X, y)
+
+pickle.dump(model, open("model.pkl", "wb"))
+print("Done")
