@@ -1,6 +1,7 @@
 import streamlit as st
 import pickle
 import tldextract
+import re
 
 # Page Config
 st.set_page_config(
@@ -27,16 +28,15 @@ model = load_model()
 
 # --- FIXED FEATURE EXTRACTION ---
 def extract_features(url):
-    """Extract features same logic as training - adjust if your training is different"""
     return [
-        len(url),  # url length
-        1 if "@" in url else 0,  # has @
-        url.count("."),  # dot count
-        url.count("-"),  # hyphen count
-        1 if "https" in url else 0,  # has https
-        len(url.split("/")),  # slash count / depth
-        1 if url.count("//") > 1 else 0,  # double slash redirect
-        1 if any(c.isdigit() for c in url) else 0,  # has digit
+        len(url),
+        1 if "@" in url else 0,
+        url.count("."),
+        url.count("-"),
+        1 if "https" in url else 0,
+        len(url.split("/")),
+        1 if url.count("//") > 1 else 0,
+        1 if any(c.isdigit() for c in url) else 0,
     ]
 
 # Threat Intel Data
@@ -75,18 +75,28 @@ with tab1:
                 ext = tldextract.extract(url_low)
                 domain = f"{ext.domain}.{ext.suffix}" if ext.suffix else ext.domain
                 
+                # NEW: Detect IP address - FIX FOR YOUR CASE
+                ip_pattern = r"\b(?:\d{1,3}\.){3}\d{1,3}\b"
+                has_ip = bool(re.search(ip_pattern, url_low))
+                
                 is_legit = domain in legit_domains or any(legit in url_low for legit in legit_domains)
                 has_bank = any(b in url_low for b in bank_keywords)
                 has_scam = any(s in url_low for s in scam_keywords)
                 
-                if is_legit and not has_scam:
+                # LAYER 1: Whitelist
+                if is_legit and not has_scam and not has_ip:
                     st.markdown('<div class="safe-box"><h3>✅ SAFE - Legitimate Banking Domain</h3>Domain verified in Malaysian Bank Whitelist.</div>', unsafe_allow_html=True)
+                # LAYER 2: Threat Intel - NOW CATCHES 192.168.1.1/maybank
+                elif has_ip and has_bank:
+                    st.markdown('<div class="phish-box"><h3>🚨 CONFIRMED PHISHING</h3>IP Address used with Bank Keyword - Banks never use IP.<br><b>Pattern: IP + Banking Keyword (High Risk)</b></div>', unsafe_allow_html=True)
                 elif has_bank and has_scam:
                     st.markdown('<div class="phish-box"><h3>🚨 CONFIRMED PHISHING</h3>Matched Localized Threat Pattern: Bank Keyword + Scam TLD/Keyword.<br><b>Source: MyCERT & CyberSecurity Malaysia Pattern 2024-2025</b></div>', unsafe_allow_html=True)
+                elif has_ip:
+                    st.markdown('<div class="phish-box"><h3>⚠️ SUSPICIOUS - IP Address Detected</h3>Legit banks never use raw IP addresses.</div>', unsafe_allow_html=True)
+                # LAYER 3: ML
                 else:
                     try:
                         features = extract_features(url_low)
-                        # Auto-adjust to model expected features
                         expected = getattr(model, "n_features_in_", len(features))
                         if len(features) < expected:
                             features = features + [0] * (expected - len(features))
@@ -94,7 +104,6 @@ with tab1:
                             features = features[:expected]
                         
                         pred = model.predict([features])[0]
-                        
                         if pred == 1:
                             st.markdown('<div class="phish-box"><h3>⚠️ PHISHING (ML Prediction)</h3>Detected by Machine Learning model.</div>', unsafe_allow_html=True)
                         else:
@@ -104,7 +113,7 @@ with tab1:
                         st.markdown('<div class="phish-box"><h3>⚠️ SUSPICIOUS</h3>Manual review needed.</div>', unsafe_allow_html=True)
                 
                 with st.expander("See Debug Analysis"):
-                    st.write(f"Domain: {domain}, Legit: {is_legit}, Bank: {has_bank}, Scam: {has_scam}")
+                    st.write(f"Domain: {domain}, Legit: {is_legit}, Bank: {has_bank}, Scam: {has_scam}, IP: {has_ip}")
                     st.write(f"Features used: {extract_features(url_low)}")
 
 with tab2:
