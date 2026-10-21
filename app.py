@@ -51,7 +51,7 @@ tab1, tab2, tab3 = st.tabs(["🔍 Detector", "📊 Threat Dashboard", "ℹ️ Ab
 with tab1:
     col1, col2 = st.columns([2,1])
     with col1:
-        url = st.text_input("Enter Suspicious URL:", placeholder="https://hlb-secure-login.tk/login")
+        url = st.text_input("Enter Suspicious URL:", placeholder="Paste URL here...")
         if st.button("Analyze URL", type="primary"):
             url_low = url.lower()
             ext = tldextract.extract(url_low)
